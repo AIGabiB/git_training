@@ -7,7 +7,7 @@ on:
         description: "Branch to deploy from"
         required: true
         type: string
-        default: "main"
+        default: "feat/gh-pages"
 
       path:
         description: "Publishing path"
@@ -22,25 +22,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
-
-      - name: Check GitHub CLI
-        run: |
-          gh --version
-
-      - name: Show configuration
-        env:
-          REPOSITORY: ${{ github.repository }}
-          BRANCH: ${{ inputs.branch }}
-          PATH: ${{ inputs.path }}
-        run: |
-          echo "Repository: $REPOSITORY"
-          echo "Branch: $BRANCH"
-          echo "Path: $PATH"
-
       - name: Configure GitHub Pages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -48,6 +29,20 @@ jobs:
           BRANCH: ${{ inputs.branch }}
           PATH: ${{ inputs.path }}
         run: |
+          echo "Installing GitHub CLI..."
+
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+          echo "GitHub CLI version:"
+          gh --version
+
+          echo "Repository: $REPOSITORY"
+          echo "Branch: $BRANCH"
+          echo "Path: $PATH"
+
+          echo "Configuring GitHub Pages..."
+
           gh api \
             --method PUT \
             "/repos/$REPOSITORY/pages" \
