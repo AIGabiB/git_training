@@ -22,12 +22,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check GitHub CLI
-        run: |
-          echo "PATH=$PATH"
-          which gh
-          gh --version
-
       - name: Configure GitHub Pages
         env:
           GH_TOKEN: ${{ secrets.PAGES_TOKEN }}
@@ -35,18 +29,22 @@ jobs:
           BRANCH: ${{ inputs.branch }}
           PUBLISH_PATH: ${{ inputs.path }}
         run: |
-          echo "PATH=$PATH"
-          which gh
-          gh --version
-
           echo "Repository: $REPOSITORY"
           echo "Branch: $BRANCH"
           echo "Path: $PUBLISH_PATH"
+          echo ""
 
-          gh api \
-            --method PUT \
-            "/repos/$REPOSITORY/pages" \
-            --input - <<EOF
+          echo "Checking if GitHub Pages already exists..."
+
+          if gh api "/repos/$REPOSITORY/pages" > /dev/null 2>&1; then
+
+            echo "GitHub Pages already exists."
+            echo "Updating GitHub Pages..."
+
+            gh api \
+              --method PUT \
+              "/repos/$REPOSITORY/pages" \
+              --input - <<EOF
           {
             "build_type": "legacy",
             "source": {
@@ -55,3 +53,27 @@ jobs:
             }
           }
           EOF
+
+            echo "GitHub Pages updated successfully."
+
+          else
+
+            echo "GitHub Pages does not exist."
+            echo "Creating GitHub Pages..."
+
+            gh api \
+              --method POST \
+              "/repos/$REPOSITORY/pages" \
+              --input - <<EOF
+          {
+            "build_type": "legacy",
+            "source": {
+              "branch": "$BRANCH",
+              "path": "$PUBLISH_PATH"
+            }
+          }
+          EOF
+
+            echo "GitHub Pages created successfully."
+
+          fi
