@@ -48,10 +48,9 @@ jobs:
           echo ""
           echo "Checking GitHub Pages..."
 
-          if gh api "/repos/$REPOSITORY/pages"; then
+          if gh api "/repos/$REPOSITORY/pages" > /dev/null 2>&1; then
 
-            echo ""
-            echo "GitHub Pages exists."
+            echo "GitHub Pages already exists."
             echo "Updating GitHub Pages..."
 
             gh api \
@@ -67,12 +66,10 @@ jobs:
           }
           EOF
 
-            echo ""
             echo "GitHub Pages updated successfully."
 
           else
 
-            echo ""
             echo "GitHub Pages does not exist."
             echo "Creating GitHub Pages..."
 
@@ -89,7 +86,16 @@ jobs:
           }
           EOF
 
-            echo ""
             echo "GitHub Pages created successfully."
 
           fi
+
+          echo ""
+          echo "Requesting GitHub Pages build..."
+
+          gh api \
+            --method POST \
+            "/repos/$REPOSITORY/pages/builds"
+
+          echo ""
+          echo "GitHub Pages build requested successfully."
