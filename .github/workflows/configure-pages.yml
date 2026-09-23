@@ -33,17 +33,25 @@ jobs:
           REPOSITORY: ${{ inputs.repository }}
           BRANCH: ${{ inputs.branch }}
           PUBLISH_PATH: ${{ inputs.path }}
+
         run: |
           echo "Repository: $REPOSITORY"
           echo "Branch: $BRANCH"
           echo "Path: $PUBLISH_PATH"
           echo ""
 
-          echo "Checking if GitHub Pages already exists..."
+          echo "Checking repository access..."
 
-          if gh api "/repos/$REPOSITORY/pages" > /dev/null 2>&1; then
+          gh api "/repos/$REPOSITORY" \
+            --jq '{full_name: .full_name, private: .private}'
 
-            echo "GitHub Pages already exists."
+          echo ""
+          echo "Checking GitHub Pages..."
+
+          if gh api "/repos/$REPOSITORY/pages"; then
+
+            echo ""
+            echo "GitHub Pages exists."
             echo "Updating GitHub Pages..."
 
             gh api \
@@ -59,10 +67,12 @@ jobs:
           }
           EOF
 
+            echo ""
             echo "GitHub Pages updated successfully."
 
           else
 
+            echo ""
             echo "GitHub Pages does not exist."
             echo "Creating GitHub Pages..."
 
@@ -79,6 +89,7 @@ jobs:
           }
           EOF
 
+            echo ""
             echo "GitHub Pages created successfully."
 
           fi
