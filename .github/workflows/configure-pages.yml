@@ -30,7 +30,7 @@ jobs:
 
       - name: Configure GitHub Pages
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAGES_TOKEN }}
           REPOSITORY: ${{ github.repository }}
           BRANCH: ${{ inputs.branch }}
           PUBLISH_PATH: ${{ inputs.path }}
