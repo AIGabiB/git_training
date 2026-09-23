@@ -22,9 +22,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Configure GitHub Pages
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - name: Check GitHub CLI
+        run: |
+          gh --version
+
+      - name: Show configuration
         env:
-          GH_TOKEN: ${{ secrets.PAGES_TOKEN }}
           REPOSITORY: ${{ github.repository }}
           BRANCH: ${{ inputs.branch }}
           PATH: ${{ inputs.path }}
@@ -33,6 +41,13 @@ jobs:
           echo "Branch: $BRANCH"
           echo "Path: $PATH"
 
+      - name: Configure GitHub Pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: ${{ inputs.branch }}
+          PATH: ${{ inputs.path }}
+        run: |
           gh api \
             --method PUT \
             "/repos/$REPOSITORY/pages" \
