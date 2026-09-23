@@ -1,0 +1,118 @@
+name: Configure GitHub Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "Repository name"
+        required: true
+        type: string
+
+      branch:
+        description: "Branch to deploy from"
+        required: true
+        type: string
+        default: "feat/gh-pages"
+
+      path:
+        description: "Publishing path"
+        required: true
+        type: choice
+        options:
+          - /
+          - /docs
+
+jobs:
+  configure-pages:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate inputs
+        env:
+          REPOSITORY: ${{ inputs.repository }}
+          BRANCH: ${{ inputs.branch }}
+          PATH: ${{ inputs.path }}
+          ORG: ${{ vars.GITHUB_ORG }}
+        run: |
+          if [[ -z "$REPOSITORY" ]]; then
+            echo "Repository is required"
+            exit 1
+          fi
+
+          if [[ -z "$BRANCH" ]]; then
+            echo "Branch is required"
+            exit 1
+          fi
+
+          if [[ "$PATH" != "/" && "$PATH" != "/docs" ]]; then
+            echo "Path must be / or /docs"
+            exit 1
+          fi
+
+          echo "Repository: $ORG/$REPOSITORY"
+          echo "Branch: $BRANCH"
+          echo "Path: $PATH"
+
+      - name: Check repository and branch
+        env:
+          GH_TOKEN: ${{ secrets.ORG_PAGES_TOKEN }}
+          ORG: ${{ vars.GITHUB_ORG }}
+          REPOSITORY: ${{ inputs.repository }}
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          echo "Checking repository..."
+
+          gh api \
+            "/repos/$ORG/$REPOSITORY" \
+            --silent
+
+          echo "Repository exists."
+
+          echo "Checking branch..."
+
+          gh api \
+            "/repos/$ORG/$REPOSITORY/branches/$BRANCH" \
+            --silent
+
+          echo "Branch exists."
+
+      - name: Configure GitHub Pages
+        env:
+          GH_TOKEN: ${{ secrets.ORG_PAGES_TOKEN }}
+          ORG: ${{ vars.GITHUB_ORG }}
+          REPOSITORY: ${{ inputs.repository }}
+          BRANCH: ${{ inputs.branch }}
+          PATH: ${{ inputs.path }}
+        run: |
+          echo "Configuring GitHub Pages..."
+
+          RESPONSE=$(gh api \
+            --method PUT \
+            "/repos/$ORG/$REPOSITORY/pages" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            --input - <<EOF
+          {
+            "build_type": "legacy",
+            "source": {
+              "branch": "$BRANCH",
+              "path": "$PATH"
+            }
+          }
+          EOF
+          )
+
+          echo "GitHub Pages configured successfully."
+          echo "$RESPONSE"
+
+      - name: Show Pages URL
+        env:
+          GH_TOKEN: ${{ secrets.ORG_PAGES_TOKEN }}
+          ORG: ${{ vars.GITHUB_ORG }}
+          REPOSITORY: ${{ inputs.repository }}
+        run: |
+          echo "Getting Pages information..."
+
+          gh api \
+            "/repos/$ORG/$REPOSITORY/pages" \
+            --jq '.html_url'
